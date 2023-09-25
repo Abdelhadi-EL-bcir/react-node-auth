@@ -1,5 +1,7 @@
 import axios from 'axios';
 import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom";
+import Cookies from 'js-cookie';
 const Login = () => {
     const [user, setUser] = useState({
         email: "",
@@ -7,13 +9,15 @@ const Login = () => {
     });
 
     const navigate = useNavigate();
-
+    axios.defaults.withCredentials = true;
     const submitHundler = (e) => {
         e.preventDefault();
-        axios.post('http://localhost:8081/register', user).then((response => {
-            console.log(response.data); nav
+        axios.post('http://localhost:8081/login', user).then((response => {
+            console.log(response.data);
+            console.log(response);
             if (response.data.Status === 'Success') {
-                navigate('/login');
+                Cookies.set('access_token', response.headers['x-access-token'])
+                navigate('/');
             } else {
                 alert('error');
             }

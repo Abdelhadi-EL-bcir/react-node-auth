@@ -6,8 +6,15 @@ import bcrypt from "bcrypt";
 import cookieParser from "cookie-parser";
 const salt = 10;
 const app = express();
+
 app.use(express.json());
-app.use(cors());
+
+app.use(cors({
+    origin: ["http://127.0.0.1:5173"] , 
+    methods:["POST", "GET"],
+    credentials : true
+}));
+
 app.use(cookieParser());
 
 const db = mysql.createConnection({
@@ -17,6 +24,26 @@ const db = mysql.createConnection({
     database: "auth"
 });
 
+
+const verifyUser = (req,res,next)=>{
+    const token = req.cookies.token;
+    if(!token){
+       return res.json({Error : 'You are not authenticated'});
+    }else{
+        jwt.verify(token , "jwt-secret-key" , (err,decoded)=>{
+            if(err){
+                return res.json({Error : 'You are not authenticated'});
+            }else{
+                req.name = decoded.name ; 
+                next();
+            }
+        })
+    }
+}
+
+app.get('/' , verifyUser ,(req , res)=>{
+   return res.json({Status : "Success" , name:req.name});
+});
 
 app.post('/register', (req, res) => {
     const query = "INSERT INTO `user`(`name`, `email`, `password`) VALUES (?)";
@@ -43,6 +70,12 @@ app.post('/login', (req, res) => {
             bcrypt.compare(req.body.password.toString(), data[0].password, (err, response) => {
                 if (err) return res.json({ Error: "Password compare error" });
                 if (response) {
+                    const name = data[0].name;
+                    const token = jwt.sign({ name }, "jwt-secret-key", { expiresIn: '1d' });
+                    res.cookie('token',token , {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === "production",
+                      });
                     return res.json({ Status: "Success" });
                 } else {
                     return res.json({ Error: "Password not matched" });
@@ -52,6 +85,12 @@ app.post('/login', (req, res) => {
             return res.json({ Error: "No email existed" });
         }
     })
+})
+
+
+app.get('/logout' , (req , res)=>{
+    res.clearCookie('token'); 
+    return res.json({ Status: "Success" });
 })
 
 app.listen(8081, () => {

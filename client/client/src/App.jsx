@@ -1,4 +1,4 @@
-import { BrowserRouter , Route , Routes } from 'react-router-dom';
+import { BrowserRouter , Route , Routes ,Link } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Home from './compoenets/Home';
 import Register from './compoenets/Register';
@@ -8,6 +8,9 @@ function App() {
   return (
     <>
       <BrowserRouter>
+        <Link className='m-2' to="/">home</Link>
+        <Link className='m-2' to="/register">register</Link>
+        <Link className='m-2' to="/login">login</Link>
        <Routes>
           <Route path='/' element={<Home/>}></Route>
           <Route path='/register' element={<Register/>}></Route>
